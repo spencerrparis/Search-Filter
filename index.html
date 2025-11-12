@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shop</title>
+    <style>
+        root{
+            --bg:#f6f7fb;
+            --card:#ffffff;
+            --muted:#6b7280;
+            --accent:#0f62fe;
+            --accent-700:#0b52d6;
+            --radius:12px;
+            --shadow: 0 6px 18px rgba(14,18,36,0.08);
+            --max-width:1100px;
+        }
+
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            margin:0;
+            font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+            background:linear-gradient(180deg,var(--bg),#fff);
+            color:#111827;
+            -webkit-font-smoothing:antialiased;
+        }
+        .container{max-width:var(--max-width);margin:0 auto;padding:0 20px}
+
+        .site-header{padding:28px 0 8px}
+        .header-inner{display:flex;align-items:center;justify-content:space-between}
+        .brand{margin:0;font-size:20px;letter-spacing:0.2px}
+        .tagline{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+        .actions{display:flex;gap:12px;align-items:center}
+        .cart-btn{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:8px 12px;border-radius:999px;cursor:pointer;font-size:15px}
+        .cart-count{background:var(--accent);color:#fff;padding:2px 8px;border-radius:999px;margin-left:6px;font-weight:600}
+
+        .section-title{font-size:18px;margin:18px 0}
+
+        .products-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-bottom:60px}
+        .product-card{background:var(--card);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+        .card-media{border:0;padding:0;background:transparent;display:block;width:100%;cursor:pointer}
+        .card-media img{display:block;width:100%;height:160px;object-fit:cover}
+        .card-body{padding:14px;display:flex;flex-direction:column;gap:10px}
+        .card-title{margin:0;font-size:16px}
+        .card-price{color:var(--muted);font-weight:600}
+        .add-btn{margin-top:auto;background:var(--accent);color:#fff;border:0;padding:10px;border-radius:8px;cursor:pointer}
+        .add-btn:hover{background:var(--accent-700)}
+
+        .primary{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}
+        .close-btn{background:transparent;border:0;font-size:16px;cursor:pointer}
+
+        .cart-drawer{position:fixed;right:0;top:0;height:100%;width:340px;background:var(--card);box-shadow:-12px 0 30px rgba(12,16,40,0.08);transform:translateX(110%);transition:transform .28s ease;padding:18px;z-index:60;border-left:1px solid rgba(0,0,0,0.04)}
+        .cart-drawer.open{transform:translateX(0)}
+        .cart-header{display:flex;justify-content:space-between;align-items:center}
+        .cart-items{margin-top:12px;display:flex;flex-direction:column;gap:10px;max-height:62%;overflow:auto;padding-right:8px}
+        .cart-item{display:flex;justify-content:space-between;align-items:center;padding:8px;background:linear-gradient(180deg,#fff,#fbfdff);border-radius:8px}
+        .item-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+        .qty-btn{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:6px 8px;border-radius:6px;cursor:pointer}
+        .remove-btn{background:transparent;border:0;color:var(--muted);font-size:13px;cursor:pointer}
+        .cart-footer{position:absolute;left:0;right:0;bottom:0;padding:18px;background:linear-gradient(180deg,transparent,rgba(255,255,255,0.9));display:flex;align-items:center;justify-content:space-between}
+
+        .overlay{position:fixed;inset:0;background:rgba(6,8,23,0.38);z-index:50}
+        .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);opacity:0;transition:all .18s ease;z-index:70;width:min(880px,94%);max-height:86vh;overflow:auto}
+        .modal.open{transform:translate(-50%,-50%) scale(1);opacity:1}
+        .modal-content{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+        .modal-body{display:flex;gap:16px}
+        .modal-image{width:320px;height:220px;object-fit:cover;border-radius:8px}
+        .modal-info{flex:1}
+        .modal-price{font-weight:700;margin:10px 0}
+
+        .site-footer{padding:28px 0;text-align:center;color:var(--muted);font-size:13px}
+
+        /* small screens */
+        @media (max-width:600px){
+            .card-media img{height:140px}
+            .modal-body{flex-direction:column}
+            .modal-image{width:100%;height:220px}
+            .cart-drawer{width:94%}
+            .cart-footer{position:static;margin-top:12px}
+        }
+
+        .no-scroll{overflow:hidden}
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-inner">
+            <h1 class="brand">Shop</h1>
+            <div class="actions">
+                <button id="cart-button" class="cart-btn" aria-label="Open cart">
+                    🛒 <span id="cart-count" class="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+        <p class="tagline">Sleek, simple, single-page e‑commerce demo</p>
+    </header>
+
+    <main class="container">
+        <section class="products-section">
+            <h2 class="section-title">Products</h2>
+            <div id="products" class="products-grid" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <aside id="cart-drawer" class="cart-drawer" aria-hidden="true">
+        <div class="cart-header">
+            <h3>Cart</h3>
+            <button id="close-cart" class="close-btn" aria-label="Close cart">✕</button>
+        </div>
+        <div id="cart-items" class="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-total">Total: $<span id="cart-total">0.00</span></div>
+            <button id="checkout-btn" class="primary">Checkout</button>
+        </div>
+    </aside>
+
+    <div id="overlay" class="overlay" hidden></div>
+
+    <!-- Product modal -->
+    <div id="product-modal" class="modal" aria-hidden="true">
+        <div class="modal-content">
+            <button id="close-modal" class="close-btn">✕</button>
+            <div class="modal-body">
+                <img id="modal-image" src="" alt="" class="modal-image">
+                <div class="modal-info">
+                    <h3 id="modal-title"></h3>
+                    <p id="modal-desc"></p>
+                    <div class="modal-price">$<span id="modal-price"></span></div>
+                    <button id="modal-add" class="primary">Add to cart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+        <script>
+            // Sample product data
+            const PRODUCTS = [
+                { id: 1, title: 'Classic Tee', price: 24.00, img: 'https://picsum.photos/seed/p1/600/400', desc: 'Comfortable cotton tee — timeless fit.' },
+                { id: 2, title: 'Everyday Sneakers', price: 79.00, img: 'https://picsum.photos/seed/p2/600/400', desc: 'Lightweight sneakers for daily wear.' },
+                { id: 3, title: 'Leather Wallet', price: 49.50, img: 'https://picsum.photos/seed/p3/600/400', desc: 'Slim wallet in full-grain leather.' },
+                { id: 4, title: 'Canvas Tote', price: 19.99, img: 'https://picsum.photos/seed/p4/600/400', desc: 'Durable tote for errands and work.' },
+                { id: 5, title: 'Weekender Bag', price: 129.00, img: 'https://picsum.photos/seed/p5/600/400', desc: 'Spacious bag for quick trips.' },
+                { id: 6, title: 'Sunglasses', price: 59.00, img: 'https://picsum.photos/seed/p6/600/400', desc: 'UV400 protection — stylish frames.' }
+            ];
+
+            const cart = new Map();
+
+            const productsEl = document.getElementById('products');
+            const cartCountEl = document.getElementById('cart-count');
+            const cartDrawer = document.getElementById('cart-drawer');
+            const cartItemsEl = document.getElementById('cart-items');
+            const cartTotalEl = document.getElementById('cart-total');
+            const cartButton = document.getElementById('cart-button');
+            const closeCartBtn = document.getElementById('close-cart');
+            const overlay = document.getElementById('overlay');
+            const checkoutBtn = document.getElementById('checkout-btn');
+
+            const modal = document.getElementById('product-modal');
+            const modalImage = document.getElementById('modal-image');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDesc = document.getElementById('modal-desc');
+            const modalPrice = document.getElementById('modal-price');
+            const modalAdd = document.getElementById('modal-add');
+            const closeModal = document.getElementById('close-modal');
+
+            let activeProduct = null;
+
+            function formatPrice(v) { return v.toFixed(2); }
+
+            function renderProducts() {
+                productsEl.innerHTML = '';
+                PRODUCTS.forEach(p => {
+                    const card = document.createElement('article');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <button class="card-media" data-id="${p.id}" aria-label="View ${p.title}">
+                            <img src="${p.img}" alt="${p.title}">
+                        </button>
+                        <div class="card-body">
+                            <h3 class="card-title">${p.title}</h3>
+                            <div class="card-price">$${formatPrice(p.price)}</div>
+                            <button class="add-btn" data-id="${p.id}">Add to cart</button>
+                        </div>
+                    `;
+                    productsEl.appendChild(card);
+                });
+            }
+
+            function updateCartCount() {
+                let count = 0;
+                for (const qty of cart.values()) count += qty;
+                cartCountEl.textContent = count;
+            }
+
+            function updateCartUI() {
+                cartItemsEl.innerHTML = '';
+                let total = 0;
+                for (const [id, qty] of cart.entries()) {
+                    const p = PRODUCTS.find(x => x.id === id);
+                    const lineTotal = p.price * qty;
+                    total += lineTotal;
+                    const item = document.createElement('div');
+                    item.className = 'cart-item';
+                    item.innerHTML = `
+                        <div class="item-info">
+                            <strong>${p.title}</strong>
+                            <div class="item-price">$${formatPrice(p.price)} x ${qty}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="qty-btn" data-id="${id}" data-op="-">−</button>
+                            <button class="qty-btn" data-id="${id}" data-op="+">+</button>
+                            <button class="remove-btn" data-id="${id}">Remove</button>
+                        </div>
+                    `;
+                    cartItemsEl.appendChild(item);
+                }
+                cartTotalEl.textContent = formatPrice(total);
+                updateCartCount();
+            }
+
+            function addToCart(productId, qty = 1) {
+                const current = cart.get(productId) || 0;
+                cart.set(productId, current + qty);
+                updateCartUI();
+            }
+
+            function removeFromCart(productId) {
+                cart.delete(productId);
+                updateCartUI();
+            }
+
+            // Event delegation for product actions
+            productsEl.addEventListener('click', (e) => {
+                const addBtn = e.target.closest('.add-btn');
+                const mediaBtn = e.target.closest('.card-media');
+                if (addBtn) {
+                    const id = Number(addBtn.dataset.id);
+                    addToCart(id, 1);
+                    showCart();
+                } else if (mediaBtn) {
+                    const id = Number(mediaBtn.dataset.id);
+                    openModal(id);
+                }
+            });
+
+            // Cart interaction
+            cartButton.addEventListener('click', showCart);
+            closeCartBtn.addEventListener('click', hideCart);
+            overlay.addEventListener('click', () => { hideCart(); closeProductModal(); });
+
+            cartItemsEl.addEventListener('click', (e) => {
+                const qtyBtn = e.target.closest('.qty-btn');
+                const removeBtn = e.target.closest('.remove-btn');
+                if (qtyBtn) {
+                    const id = Number(qtyBtn.dataset.id);
+                    const op = qtyBtn.dataset.op;
+                    const current = cart.get(id) || 0;
+                    if (op === '+') cart.set(id, current + 1);
+                    if (op === '-') {
+                        if (current <= 1) cart.delete(id); else cart.set(id, current - 1);
+                    }
+                    updateCartUI();
+                } else if (removeBtn) {
+                    const id = Number(removeBtn.dataset.id);
+                    removeFromCart(id);
+                }
+            });
+
+            checkoutBtn.addEventListener('click', () => {
+                if (cart.size === 0) {
+                    alert('Your cart is empty.');
+                    return;
+                }
+                // Simple mock checkout flow: confirm and clear
+                const confirmed = confirm('Proceed to mock checkout?');
+                if (confirmed) {
+                    cart.clear();
+                    updateCartUI();
+                    hideCart();
+                    alert('Thank you — this was a demo checkout.');
+                }
+            });
+
+            function showCart() {
+                cartDrawer.setAttribute('aria-hidden', 'false');
+                cartDrawer.classList.add('open');
+                overlay.hidden = false;
+                document.body.classList.add('no-scroll');
+            }
+            function hideCart() {
+                cartDrawer.setAttribute('aria-hidden', 'true');
+                cartDrawer.classList.remove('open');
+                overlay.hidden = true;
+                document.body.classList.remove('no-scroll');
+            }
+
+            // Modal functions
+            function openModal(id) {
+                const p = PRODUCTS.find(x => x.id === id);
+                if (!p) return;
+                activeProduct = p;
+                modalImage.src = p.img;
+                modalImage.alt = p.title;
+                modalTitle.textContent = p.title;
+                modalDesc.textContent = p.desc;
+                modalPrice.textContent = formatPrice(p.price);
+                modal.setAttribute('aria-hidden', 'false');
+                modal.classList.add('open');
+                overlay.hidden = false;
+                document.body.classList.add('no-scroll');
+            }
+
+            function closeProductModal() {
+                activeProduct = null;
+                modal.setAttribute('aria-hidden', 'true');
+                modal.classList.remove('open');
+                overlay.hidden = true;
+                document.body.classList.remove('no-scroll');
+            }
+
+            closeModal.addEventListener('click', closeProductModal);
+            modalAdd.addEventListener('click', () => {
+                if (!activeProduct) return;
+                addToCart(activeProduct.id, 1);
+                closeProductModal();
+                showCart();
+            });
+
+        // Initialize
+        renderProducts();
+        updateCartUI();
+</script>
+</body>
+</html>
